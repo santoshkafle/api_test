@@ -1,6 +1,7 @@
 import 'package:api_test/models/todos_model.dart';
-import 'package:api_test/services/todoservices.dart';
+import 'package:api_test/provider/todos_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AddTodoForm extends StatefulWidget {
   const AddTodoForm({super.key});
@@ -64,10 +65,9 @@ class _AddTodoFormState extends State<AddTodoForm> {
                 completed: isCompleted,
               );
 
-              Todoservices.postTodosData(todo);
+              context.read<TodosProvider>().createTodos(todo);
             }
             Navigator.of(context).pop();
-            setState(() {});
           },
           child: Text('Add'),
         ),

@@ -1,7 +1,8 @@
-import 'package:api_test/services/todoservices.dart';
+import 'package:api_test/provider/todos_provider.dart';
 import 'package:api_test/widgets/add_todo_form.dart';
 import 'package:api_test/widgets/edit_todo_form.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,14 +13,22 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    context.read<TodosProvider>().initilizeTodos();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final todos = context.watch<TodosProvider>();
+    final isLoading = context.watch<TodosProvider>().isLoading;
     return Scaffold(
       appBar: AppBar(
         title: Text("HomePage"),
         actions: [
           IconButton(
             onPressed: () {
-              setState(() {});
+              context.read<TodosProvider>().initilizeTodos();
             },
             icon: Icon(Icons.refresh),
           ),
@@ -34,72 +43,100 @@ class _HomePageState extends State<HomePage> {
           showDialog(context: context, builder: (context) => AddTodoForm());
         },
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        child: FutureBuilder(
-          future: Todoservices.getTodos(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            //data is loaded,
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                final data = snapshot.data!;
-                return Card(
-                  color: Colors.grey[300],
-                  elevation: 2,
-                  child: InkWell(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => EditTodoForm(todosModel: data[index]),
-                      );
-                    },
-                    child: ListTile(
-                      leading: Text(
-                        data[index].userId!,
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
+      body: Center(
+        child:
+            isLoading
+                ? CircularProgressIndicator()
+                : Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 10,
                         ),
-                        maxLines: 2,
-                        textAlign: TextAlign.justify,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      title: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            data[index].title,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          data[index].completed
-                              ? Icon(Icons.check, color: Colors.green)
-                              : Icon(Icons.dangerous, color: Colors.red),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        onPressed: () {
-                          Todoservices.deleteTodos(data[index].userId!);
-                          setState(() {});
-                          Todoservices.getTodos();
-                        },
-                        icon: Icon(Icons.delete),
+                        child: ListView.builder(
+                          itemCount: todos.todosModel.length,
+                          itemBuilder: (context, index) {
+                            final todo = todos.todosModel[index];
+                            return Container(
+                              padding: EdgeInsets.all(20),
+                              margin: EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              // height: 100,
+                              child: Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        todo.title,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      todo.completed
+                                          ? Text(
+                                            'Completed',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.green,
+                                            ),
+                                          )
+                                          : Text(
+                                            'Not Completed.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                    ],
+                                  ),
+                                  Spacer(),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () async {
+                                          showDialog(
+                                            context: context,
+                                            builder:
+                                                (context) => EditTodoForm(
+                                                  todosModel: todo,
+                                                ),
+                                          );
+                                        },
+                                        icon: Icon(
+                                          Icons.edit_outlined,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {
+                                          todos.deleteTodos(todo.userId ?? '');
+                                        },
+                                        icon: Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
+                  ],
+                ),
       ),
     );
   }

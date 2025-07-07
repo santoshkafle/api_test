@@ -1,6 +1,7 @@
 import 'package:api_test/models/todos_model.dart';
-import 'package:api_test/services/todoservices.dart';
+import 'package:api_test/provider/todos_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class EditTodoForm extends StatefulWidget {
   TodosModel todosModel;
@@ -72,10 +73,9 @@ class _EditTodoForm extends State<EditTodoForm> {
                 completed: isCompleted,
               );
 
-              Todoservices.editTodosData(todo);
+              context.read<TodosProvider>().editTodos(todo);
             }
             Navigator.of(context).pop();
-            setState(() {});
           },
           child: Text('Add'),
         ),
